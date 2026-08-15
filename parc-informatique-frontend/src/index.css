@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  /* Ces deux couleurs n'étaient définies nulle part : les classes bg-navy,
+     text-navy et bg-steel ne généraient donc aucun style, d'où le faible
+     contraste (texte clair sur fond clair dans le sidebar notamment). */
+  --color-navy: #101d3f;   /* fond sidebar, titres, hover boutons */
+  --color-steel: #2f5aa8;  /* boutons d'action, liens actifs */
+}
+
+body {
+  background-color: #f5f7fa;
+  color: #1a1f2b;
+}
