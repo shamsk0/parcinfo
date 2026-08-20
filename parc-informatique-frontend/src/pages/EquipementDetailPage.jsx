@@ -13,8 +13,10 @@ import { getHistoriqueEquipement } from "../api/affectationService";
 import EquipementForm from "../components/EquipementForm";
 import Badge from "../components/Badge";
 import HistoriqueAffectationsTable from "../components/HistoriqueAffectationsTable";
+import { useAuth } from "../context/AuthContext";
 
 function EquipementDetailPage() {
+  const { isAdmin } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [equipement, setEquipement] = useState(null);
@@ -28,12 +30,16 @@ function EquipementDetailPage() {
     getHistoriqueEquipement(id).then((res) => setHistorique(res.data));
   };
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => {
+    load();
+  }, [id]);
 
   const handleUpdate = async (data) => {
     const { employeId, ...equipData } = data;
     await updateEquipement(id, equipData);
-    const currentEmployeId = equipement.employe ? String(equipement.employe.id) : '';
+    const currentEmployeId = equipement.employe
+      ? String(equipement.employe.id)
+      : "";
     if (employeId !== currentEmployeId) {
       if (employeId) {
         await assignEquipement(id, employeId);
@@ -52,7 +58,8 @@ function EquipementDetailPage() {
     }
   };
 
-  if (!equipement) return <div className="p-8 text-gray-700">Chargement...</div>;
+  if (!equipement)
+    return <div className="p-8 text-gray-700">Chargement...</div>;
 
   const isAssigned = !!equipement.employe;
 
@@ -76,25 +83,31 @@ function EquipementDetailPage() {
           <div className="flex items-center gap-3">
             <Badge status={equipement.statut} />
             <Badge status={equipement.etat} />
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50"
-            >
-              <Pencil size={16} /> Modifier
-            </button>
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-red-50 hover:text-red-600"
-            >
-              <Trash2 size={16} /> Supprimer
-            </button>
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50"
+                >
+                  <Pencil size={16} /> Modifier
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-red-50 hover:text-red-600"
+                >
+                  <Trash2 size={16} /> Supprimer
+                </button>
+              </>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t">
           <div>
             <p className="text-sm text-gray-500">Numéro de série</p>
-            <p className="text-gray-900 font-medium">{equipement.numeroSerie}</p>
+            <p className="text-gray-900 font-medium">
+              {equipement.numeroSerie}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Date d'acquisition</p>
@@ -141,11 +154,13 @@ function EquipementDetailPage() {
       </div>
 
       <div className="mt-6">
-        <h2 className="text-lg font-semibold text-navy mb-4">Historique des affectations</h2>
+        <h2 className="text-lg font-semibold text-navy mb-4">
+          Historique des affectations
+        </h2>
         <HistoriqueAffectationsTable affectations={historique} />
       </div>
 
-      {showForm && (
+      {isAdmin && showForm && (
         <EquipementForm
           initialData={equipement}
           employes={employes}

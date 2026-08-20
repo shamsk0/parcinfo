@@ -13,8 +13,10 @@ import { getHistoriqueEmploye } from "../api/affectationService";
 import SearchableSelect from "../components/SearchableSelect";
 import Badge from "../components/Badge";
 import HistoriqueAffectationsTable from "../components/HistoriqueAffectationsTable";
+import { useAuth } from "../context/AuthContext";
 
 function EmployeDetailPage() {
+  const { isAdmin } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [employe, setEmploye] = useState(null);
@@ -29,8 +31,8 @@ function EmployeDetailPage() {
     getEquipementsByEmploye(id).then((res) => setEquipements(res.data));
     getAllEquipements().then((res) =>
       setAvailableEquipements(
-        res.data.filter((eq) => !eq.employe && eq.statut === "En stock")
-      )
+        res.data.filter((eq) => !eq.employe && eq.statut === "En stock"),
+      ),
     );
     getHistoriqueEmploye(id).then((res) => setHistorique(res.data));
   };
@@ -48,7 +50,9 @@ function EmployeDetailPage() {
   };
 
   const handleUnassign = async (equipId) => {
-    if (confirm("Retirer cet équipement de cet employé ? Il retournera en stock.")) {
+    if (
+      confirm("Retirer cet équipement de cet employé ? Il retournera en stock.")
+    ) {
       await unassignEquipement(equipId);
       load();
     }
@@ -87,19 +91,27 @@ function EmployeDetailPage() {
       </div>
 
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-navy">Équipements assignés</h2>
-        <button
-          onClick={() => { setShowAssignPanel(true); setSelectedEquipId(""); }}
-          className="flex items-center gap-2 bg-steel text-white px-4 py-2 rounded-lg hover:bg-navy"
-        >
-          <Plus size={18} /> Assigner un équipement
-        </button>
+        <h2 className="text-lg font-semibold text-navy">
+          Équipements assignés
+        </h2>
+        {isAdmin && (
+          <button
+            onClick={() => {
+              setShowAssignPanel(true);
+              setSelectedEquipId("");
+            }}
+            className="flex items-center gap-2 bg-steel text-white px-4 py-2 rounded-lg hover:bg-navy"
+          >
+            <Plus size={18} /> Assigner un équipement
+          </button>
+        )}
       </div>
 
-      {showAssignPanel && (
+      {isAdmin && showAssignPanel && (
         <div className="bg-white rounded-xl shadow p-5 mb-4 border border-gray-200">
           <p className="text-sm text-gray-700 mb-2">
-            Choisir un équipement disponible en stock (non assigné) à affecter à {employe.prenom} {employe.nom} :
+            Choisir un équipement disponible en stock (non assigné) à affecter à{" "}
+            {employe.prenom} {employe.nom} :
           </p>
           <div className="flex gap-3 items-start">
             <div className="flex-1">
@@ -108,7 +120,11 @@ function EmployeDetailPage() {
                 value={selectedEquipId}
                 onChange={setSelectedEquipId}
                 placeholder="Rechercher un équipement..."
-                emptyLabel={equipementOptions.length === 0 ? "Aucun équipement disponible en stock" : "Sélectionner un équipement"}
+                emptyLabel={
+                  equipementOptions.length === 0
+                    ? "Aucun équipement disponible en stock"
+                    : "Sélectionner un équipement"
+                }
               />
             </div>
             <button
@@ -127,7 +143,8 @@ function EmployeDetailPage() {
           </div>
           {equipementOptions.length === 0 && (
             <p className="text-sm text-gray-500 mt-2">
-              Aucun équipement en stock n'est disponible actuellement. Ajoutez-en un depuis l'onglet Équipements.
+              Aucun équipement en stock n'est disponible actuellement.
+              Ajoutez-en un depuis l'onglet Équipements.
             </p>
           )}
         </div>
@@ -142,7 +159,7 @@ function EmployeDetailPage() {
               <th className="px-4 py-3">N° série</th>
               <th className="px-4 py-3">Statut</th>
               <th className="px-4 py-3">État</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -152,7 +169,9 @@ function EmployeDetailPage() {
                 className="border-t hover:bg-gray-50 cursor-pointer"
                 onClick={() => navigate(`/equipements/${eq.id}`)}
               >
-                <td className="px-4 py-3 font-medium text-gray-900">{eq.nom}</td>
+                <td className="px-4 py-3 font-medium text-gray-900">
+                  {eq.nom}
+                </td>
                 <td className="px-4 py-3 text-gray-700">{eq.type}</td>
                 <td className="px-4 py-3 text-gray-700">{eq.numeroSerie}</td>
                 <td className="px-4 py-3">
@@ -161,36 +180,52 @@ function EmployeDetailPage() {
                 <td className="px-4 py-3">
                   <Badge status={eq.etat} />
                 </td>
-                <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => handleUnassign(eq.id)}
-                    title="Retirer l'affectation (retourne en stock)"
-                    className="text-gray-600 hover:text-amber-600 mr-3"
+                {isAdmin && (
+                  <td
+                    className="px-4 py-3 text-right"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <XCircle size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(eq.id)}
-                    title="Supprimer définitivement"
-                    className="text-gray-600 hover:text-red-600"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </td>
+                    <button
+                      onClick={() => handleUnassign(eq.id)}
+                      title="Retirer l'affectation (retourne en stock)"
+                      className="text-gray-600 hover:text-amber-600 mr-3"
+                    >
+                      <XCircle size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(eq.id)}
+                      title="Supprimer définitivement"
+                      className="text-gray-600 hover:text-red-600"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
             {equipements.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500">Aucun équipement assigné</td></tr>
+              <tr>
+                <td
+                  colSpan={isAdmin ? 6 : 5}
+                  className="px-4 py-6 text-center text-gray-500"
+                >
+                  Aucun équipement assigné
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
       <div className="mt-6">
-        <h2 className="text-lg font-semibold text-navy mb-4">Historique des équipements</h2>
+        <h2 className="text-lg font-semibold text-navy mb-4">
+          Historique des équipements
+        </h2>
         <HistoriqueAffectationsTable
           affectations={historique}
-          onRowClick={(aff) => aff.equipement && navigate(`/equipements/${aff.equipement.id}`)}
+          onRowClick={(aff) =>
+            aff.equipement && navigate(`/equipements/${aff.equipement.id}`)
+          }
         />
       </div>
     </div>
