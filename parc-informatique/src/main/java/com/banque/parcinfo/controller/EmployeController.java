@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/employes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // à restreindre en prod
 public class EmployeController {
 
     private final EmployeService employeService;

@@ -10,7 +10,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/affectations")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AffectationController {
 
     private final AffectationService affectationService;
