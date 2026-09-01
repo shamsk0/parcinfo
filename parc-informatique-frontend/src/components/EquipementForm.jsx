@@ -1,31 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import SearchableSelect from "./SearchableSelect";
 import RadioGroup from "./RadioGroup";
 
-function EquipementForm({ initialData, employes, onSubmit, onCancel }) {
+const emptyForm = {
+  nom: "",
+  type: "",
+  numeroSerie: "",
+  dateAcquisition: "",
+  etat: "Fonctionnel",
+  employeId: "",
+};
+
+const formFromInitialData = (initialData) =>
+  initialData
+    ? { ...initialData, employeId: initialData.employe?.id ?? "" }
+    : emptyForm;
+
+function EquipementForm({ initialData, employes, onSubmit, onCancel, error, isSubmitting }) {
   const isEditing = !!initialData;
 
-  const [form, setForm] = useState({
-    nom: "",
-    type: "",
-    numeroSerie: "",
-    dateAcquisition: "",
-    etat: "Fonctionnel",
-    employeId: "",
-  });
-
-  useEffect(() => {
-    if (initialData) {
-      setForm({ ...initialData, employeId: initialData.employe?.id ?? "" });
-    }
-  }, [initialData]);
+  const [form, setForm] = useState(() => formFromInitialData(initialData));
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(form);
+    await onSubmit(form);
   };
 
   // Le statut n'est jamais choisi directement : il reflète simplement si un
@@ -41,6 +42,12 @@ function EquipementForm({ initialData, employes, onSubmit, onCancel }) {
         <h2 className="text-lg font-semibold mb-4 text-gray-900">
           {isEditing ? "Modifier l'équipement" : "Ajouter un équipement"}
         </h2>
+
+        {error && (
+          <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
 
         <label className="block text-sm text-gray-700 mb-1">Nom</label>
         <input
@@ -140,15 +147,17 @@ function EquipementForm({ initialData, employes, onSubmit, onCancel }) {
           <button
             type="button"
             onClick={onCancel}
+            disabled={isSubmitting}
             className="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
           >
             Annuler
           </button>
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg bg-steel text-white hover:bg-navy"
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-lg bg-steel text-white hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Enregistrer
+            {isSubmitting ? "Enregistrement..." : "Enregistrer"}
           </button>
         </div>
       </form>

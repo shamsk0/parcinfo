@@ -21,6 +21,8 @@ function EquipementListPage() {
   const [employes, setEmployes] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("Tous");
   const [filterEtat, setFilterEtat] = useState("Tous");
@@ -39,32 +41,45 @@ function EquipementListPage() {
   const handleSubmit = async (data) => {
     const { employeId, ...equipData } = data;
 
-    if (editing) {
-      await updateEquipement(editing.id, equipData);
-      const currentEmployeId = editing.employe
-        ? String(editing.employe.id)
-        : "";
-      if (employeId !== currentEmployeId) {
+    setFormError("");
+    setIsSubmitting(true);
+    try {
+      if (editing) {
+        await updateEquipement(editing.id, equipData);
+        const currentEmployeId = editing.employe
+          ? String(editing.employe.id)
+          : "";
+        if (employeId !== currentEmployeId) {
+          if (employeId) {
+            await assignEquipement(editing.id, employeId);
+          } else {
+            await unassignEquipement(editing.id);
+          }
+        }
+      } else {
+        const res = await createEquipementStandalone(equipData);
         if (employeId) {
-          await assignEquipement(editing.id, employeId);
-        } else {
-          await unassignEquipement(editing.id);
+          await assignEquipement(res.data.id, employeId);
         }
       }
-    } else {
-      const res = await createEquipementStandalone(equipData);
-      if (employeId) {
-        await assignEquipement(res.data.id, employeId);
-      }
-    }
 
-    setShowForm(false);
-    setEditing(null);
-    load();
+      setShowForm(false);
+      setEditing(null);
+      load();
+    } catch (error) {
+      const apiErrors = error.response?.data;
+      const validationMessage = apiErrors && typeof apiErrors === "object"
+        ? Object.values(apiErrors).join(" ")
+        : null;
+      setFormError(validationMessage || "Impossible d’enregistrer l’équipement. Vérifiez votre connexion puis réessayez.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEdit = (eq) => {
     setEditing(eq);
+    setFormError("");
     setShowForm(true);
   };
 
@@ -112,6 +127,7 @@ function EquipementListPage() {
           <button
             onClick={() => {
               setEditing(null);
+              setFormError("");
               setShowForm(true);
             }}
             className="flex items-center gap-2 bg-steel text-white px-4 py-2 rounded-lg hover:bg-navy"
@@ -262,9 +278,12 @@ function EquipementListPage() {
           initialData={editing}
           employes={employes}
           onSubmit={handleSubmit}
+          error={formError}
+          isSubmitting={isSubmitting}
           onCancel={() => {
             setShowForm(false);
             setEditing(null);
+            setFormError("");
           }}
         />
       )}
