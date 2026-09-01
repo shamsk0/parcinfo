@@ -14,10 +14,16 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOriginPatterns("*")
+                        // L'application n'utilise pas de cookies ni d'authentification
+                        // navigateur. Une origine explicite évite le rejet de la requête
+                        // OPTIONS précédant les POST depuis Vercel.
+                        .allowedOrigins(
+                                "https://parcinfo-six.vercel.app",
+                                "http://localhost:5173"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .allowCredentials(false);
             }
         };
     }
